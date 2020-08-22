@@ -16,13 +16,12 @@ kickbase_logger.addHandler(sh)
 
 
 def on_feed_item(feed_item: FeedItem, bot: KickbaseBot):
-    pass
+    print("Got feed_item: " + feed_item.id)
 
 
 def on_chat_item(chat_item: ChatItem, bot: KickbaseBot):
     if chat_item.user_id != bot.kickbase_api.user.id:
         print("Got chat: " + chat_item.message + " from: " + chat_item.username)
-        bot.kickbase_api.post_chat_message("Hey {}".format(chat_item.username), bot.selected_league)
 
 
 if __name__ == '__main__':

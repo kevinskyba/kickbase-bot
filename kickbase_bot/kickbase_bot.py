@@ -65,7 +65,11 @@ class KickbaseBot:
                             new_feed_item = True
                             for cb in self._feed_item_callback:
                                 if not silent:
-                                    cb(copy.deepcopy(feed_item), self)
+                                    try:
+                                        cb(copy.deepcopy(feed_item), self)
+                                    except Exception as ex:
+                                        logger.error("Error in feed callback: " + ex)
+                                        
                         self._persistence.save_feed_item(feed_item)
                     
                     if not new_feed_item:
@@ -81,16 +85,27 @@ class KickbaseBot:
         try:
             # Fetch chat items
             logger.debug("Fetching chat items")
-            chat_items = self.kickbase_api.chat_messages(self.selected_league)
-            for chat_item in chat_items:
-                if not self._persistence.does_chat_item_exist(chat_item):
-                    logger.debug("New chat item: %s (%s)", chat_item.id, chat_item.message)
-                    for cb in self._chat_item_callback:
-                        if not silent:
-                            cb(copy.deepcopy(chat_item), self)
-                self._persistence.save_chat_item(chat_item)
+            count = 0
+            next_page_token = None
+            while True:
+                chat_items, next_page_token = self.kickbase_api.chat_messages(self.selected_league,
+                                                                              page_size=100,
+                                                                              next_page_token=next_page_token)
+                count = count + len(chat_items)
+                for chat_item in chat_items:
+                    if not self._persistence.does_chat_item_exist(chat_item):
+                        logger.debug("New chat item: %s (%s)", chat_item.id, chat_item.message)
+                        for cb in self._chat_item_callback:
+                            if not silent:
+                                try:
+                                    cb(copy.deepcopy(chat_item), self)
+                                except Exception as ex:
+                                    logger.error("Error in chat callback: " + ex)
+                    self._persistence.save_chat_item(chat_item)
+                if next_page_token is None:
+                    break
 
-            logger.debug("Fetched %s chat items", len(chat_items))
+            logger.debug("Fetched %s chat items", count)
         except Exception as ex:
             logger.error("Something went wrong fetching chat items: %s", ex)
             
