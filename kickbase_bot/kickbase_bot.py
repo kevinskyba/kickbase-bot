@@ -60,7 +60,9 @@ class KickbaseBot:
                 else:
                     new_feed_item = False
                     for feed_item in feed_items:
-                        if not self.persistence.does_feed_item_exist(feed_item):
+                        exists = self.persistence.does_feed_item_exist(feed_item)
+                        self.persistence.save_feed_item(feed_item)
+                        if not exists:
                             logger.debug("New feed item: %s", feed_item.id)
                             new_feed_item = True
                             for cb in self._feed_item_callback:
@@ -70,7 +72,6 @@ class KickbaseBot:
                                     except Exception as ex:
                                         logger.error("[{}] Error in feed callback: ".format(feed_item.id) + str(ex))
                                         
-                        self.persistence.save_feed_item(feed_item)
                     
                     if not new_feed_item:
                         break
@@ -93,7 +94,9 @@ class KickbaseBot:
                                                                               next_page_token=next_page_token)
                 count = count + len(chat_items)
                 for chat_item in chat_items:
-                    if not self.persistence.does_chat_item_exist(chat_item):
+                    exists = self.persistence.does_chat_item_exist(chat_item)
+                    self.persistence.save_chat_item(chat_item)
+                    if not exists:
                         logger.debug("New chat item: %s (%s)", chat_item.id, chat_item.message)
                         for cb in self._chat_item_callback:
                             if not silent:
@@ -101,7 +104,6 @@ class KickbaseBot:
                                     cb(copy.deepcopy(chat_item), self)
                                 except Exception as ex:
                                     logger.error("[{}] Error in chat callback: ".format(chat_item.id) + str(ex))
-                    self.persistence.save_chat_item(chat_item)
                 if next_page_token is None:
                     break
 
