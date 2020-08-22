@@ -30,7 +30,8 @@ class KickbaseBot:
             mongo_host=kwargs.get('mongodb_host', 'localhost'),
             mongo_user=kwargs.get('mongodb_user', ''),
             mongo_pwd=kwargs.get('mongodb_password', ''),
-            mongo_db=kwargs.get('mongodb_db', 'kkbs_bot')
+            mongo_db=kwargs.get('mongodb_db', 'kkbs_bot'),
+            auth_mechanism=kwargs.get('mongodb_auth_mechanism', 'SCRAM-SHA-256')
         )
         
         self._periodic_feed_interval = kwargs.get("periodic_feed_interval", 15)

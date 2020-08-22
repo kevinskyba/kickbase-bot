@@ -12,11 +12,10 @@ from kickbase_bot.serialization import _serialize
 class _Persistence:
 
     def __init__(self, mongo_host: str = "localhost", mongo_user: str = "", mongo_pwd: str = "",
-                 mongo_db: str = "kkbs_bot"):
+                 mongo_db: str = "kkbs_bot", auth_mechanism="SCRAM-SHA-256"):
         logger.debug("Connecting to mongodb")
         self.mongo_client = MongoClient(mongo_host, username=mongo_user, password=mongo_pwd, authSource=mongo_db,
-                                        authMechanism="SCRAM-SHA-256")
-        self.mongo_client.admin.command("ismaster")  # Check connection
+                                        authMechanism=auth_mechanism, connect=True)
         self.mongo_db = self.mongo_client[mongo_db]
         logger.debug("Connection succeeded")
 
