@@ -57,7 +57,7 @@ class _Persistence:
         for r in res:
             ld = LeagueData()
             ld.__dict__ = r
-            ld.creation_date.replace(tzinfo=timezone.utc)
+            ld.creation_date = ld.creation_date.replace(tzinfo=timezone.utc)
             league_data.append(ld)
         return league_data
         
@@ -76,7 +76,7 @@ class _Persistence:
         for r in res:
             fi = FeedItem()
             fi.__dict__ = r
-            fi.date.replace(tzinfo=timezone.utc)
+            fi.date = fi.date.replace(tzinfo=timezone.utc)
             
             fm = FeedMeta()
             fm.__dict__ = r["meta"]
@@ -100,7 +100,7 @@ class _Persistence:
         for r in res:
             ci = ChatItem()
             ci.__dict__ = r
-            ci.date.replace(tzinfo=timezone.utc)
+            ci.date = ci.date.replace(tzinfo=timezone.utc)
 
             chat_items.append(ci)
         return chat_items
