@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name='Kickbase_Bot',
-    version='0.0.3',
+    version='0.0.4',
     packages=['kickbase_bot'],
     url='https://github.com/kevinskyba/kickbase-bot',
     license='MIT',
@@ -13,5 +13,6 @@ setup(
     long_description_content_type="text/markdown",
     install_requires=(
         'requests',
+        'kickbase_api'
     )
 )
