@@ -1,7 +1,9 @@
+from datetime import tzinfo, timezone
 from threading import Lock
 
 from kickbase_api.models.chat_item import ChatItem
 from kickbase_api.models.feed_item import FeedItem
+from kickbase_api.models.feed_meta import FeedMeta
 from kickbase_api.models.league_data import LeagueData
 from pymongo import MongoClient
 
@@ -50,8 +52,15 @@ class _Persistence:
 
     def get_league_data(self) -> [LeagueData]:
         with self.db_mutex:
-            return self.league_data_collection.find()
-
+            res = list(self.league_data_collection.find())
+        league_data = []
+        for r in res:
+            ld = LeagueData()
+            ld.__dict__ = r
+            ld.creation_date.replace(tzinfo=timezone.utc)
+            league_data.append(ld)
+        return league_data
+        
     def does_feed_item_exist(self, feed_item: FeedItem) -> bool:
         with self.db_mutex:
             return self.feed_item_collection.count_documents({'id': feed_item.id}) > 0
@@ -62,7 +71,19 @@ class _Persistence:
 
     def get_feed_items(self) -> [FeedItem]:
         with self.db_mutex:
-            return self.feed_item_collection.find()
+            res = list(self.feed_item_collection.find())
+        feed_items = []
+        for r in res:
+            fi = FeedItem()
+            fi.__dict__ = r
+            fi.date.replace(tzinfo=timezone.utc)
+            
+            fm = FeedMeta()
+            fm.__dict__ = r["meta"]
+            fi.meta = fm
+            
+            feed_items.append(fi)
+        return feed_items
 
     def does_chat_item_exist(self, chat_item: ChatItem) -> bool:
         with self.db_mutex:
@@ -74,4 +95,12 @@ class _Persistence:
 
     def get_chat_items(self) -> [ChatItem]:
         with self.db_mutex:
-            return self.chat_item_collection.find()
+            res = list(self.chat_item_collection.find())
+        chat_items = []
+        for r in res:
+            ci = ChatItem()
+            ci.__dict__ = r
+            ci.date.replace(tzinfo=timezone.utc)
+
+            chat_items.append(ci)
+        return chat_items

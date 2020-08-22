@@ -68,7 +68,7 @@ class KickbaseBot:
                                     try:
                                         cb(copy.deepcopy(feed_item), self)
                                     except Exception as ex:
-                                        logger.error("Error in feed callback: " + ex)
+                                        logger.error("[{}] Error in feed callback: ".format(feed_item.id) + str(ex))
                                         
                         self.persistence.save_feed_item(feed_item)
                     
@@ -100,7 +100,7 @@ class KickbaseBot:
                                 try:
                                     cb(copy.deepcopy(chat_item), self)
                                 except Exception as ex:
-                                    logger.error("Error in chat callback: " + ex)
+                                    logger.error("[{}] Error in chat callback: ".format(chat_item.id) + str(ex))
                     self.persistence.save_chat_item(chat_item)
                 if next_page_token is None:
                     break
