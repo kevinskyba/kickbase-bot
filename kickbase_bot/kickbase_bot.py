@@ -26,7 +26,7 @@ class KickbaseBot:
     def __init__(self, **kwargs):
         self.kickbase_api = Kickbase(
             google_identity_toolkit_api_key=kwargs.get('google_identity_toolkit_api_key', None))
-        self._persistence = _Persistence(
+        self.persistence = _Persistence(
             mongo_host=kwargs.get('mongodb_host', 'localhost'),
             mongo_user=kwargs.get('mongodb_user', ''),
             mongo_pwd=kwargs.get('mongodb_password', ''),
@@ -60,7 +60,7 @@ class KickbaseBot:
                 else:
                     new_feed_item = False
                     for feed_item in feed_items:
-                        if not self._persistence.does_feed_item_exist(feed_item):
+                        if not self.persistence.does_feed_item_exist(feed_item):
                             logger.debug("New feed item: %s", feed_item.id)
                             new_feed_item = True
                             for cb in self._feed_item_callback:
@@ -70,7 +70,7 @@ class KickbaseBot:
                                     except Exception as ex:
                                         logger.error("Error in feed callback: " + ex)
                                         
-                        self._persistence.save_feed_item(feed_item)
+                        self.persistence.save_feed_item(feed_item)
                     
                     if not new_feed_item:
                         break
@@ -93,7 +93,7 @@ class KickbaseBot:
                                                                               next_page_token=next_page_token)
                 count = count + len(chat_items)
                 for chat_item in chat_items:
-                    if not self._persistence.does_chat_item_exist(chat_item):
+                    if not self.persistence.does_chat_item_exist(chat_item):
                         logger.debug("New chat item: %s (%s)", chat_item.id, chat_item.message)
                         for cb in self._chat_item_callback:
                             if not silent:
@@ -101,7 +101,7 @@ class KickbaseBot:
                                     cb(copy.deepcopy(chat_item), self)
                                 except Exception as ex:
                                     logger.error("Error in chat callback: " + ex)
-                    self._persistence.save_chat_item(chat_item)
+                    self.persistence.save_chat_item(chat_item)
                 if next_page_token is None:
                     break
 
@@ -110,10 +110,10 @@ class KickbaseBot:
             logger.error("Something went wrong fetching chat items: %s", ex)
             
     def run(self, league_id):
-        saved_league_id = self._persistence.get_value("league_id")
+        saved_league_id = self.persistence.get_value("league_id")
         if saved_league_id is not None and saved_league_id != league_id:
             raise Exception("The database is based on a different league_id. Please specify a different database.")
-        self._persistence.save_value("league_id", league_id)
+        self.persistence.save_value("league_id", league_id)
         
         for league in self._leagues:
             if league.id == league_id:
