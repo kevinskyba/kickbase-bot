@@ -1,4 +1,5 @@
 import copy
+from datetime import datetime
 from threading import Thread
 from typing import Callable
 
@@ -6,6 +7,7 @@ from kickbase_api.kickbase import Kickbase
 from kickbase_api.models.chat_item import ChatItem
 from kickbase_api.models.feed_item import FeedItem
 from kickbase_api.models.league_data import LeagueData
+from kickbase_api.models.market import Market
 
 from kickbase_bot import logger
 from kickbase_bot.persistence import _Persistence
@@ -16,12 +18,14 @@ class KickbaseBot:
     
     _periodic_feed_thread: Thread
     _periodic_chat_thread: Thread
-    
+    _periodic_market_thread: Thread
+
     _leagues: [LeagueData] = []
     selected_league: LeagueData = None
     
     _feed_item_callback: [Callable[[FeedItem, 'KickbaseBot'], None]] = []
     _chat_item_callback: [Callable[[ChatItem, 'KickbaseBot'], None]] = []
+    _market_callback: [Callable[[Market, 'KickbaseBot'], None]] = []
 
     def __init__(self, **kwargs):
         self.kickbase_api = Kickbase(
@@ -36,7 +40,8 @@ class KickbaseBot:
         
         self._periodic_feed_interval = kwargs.get("periodic_feed_interval", 15)
         self._periodic_chat_interval = kwargs.get("periodic_chat_interval", 5)
-    
+        self._periodic_market_interval = kwargs.get("periodic_market_interval", 60)
+
     def connect(self, username, password):
         logger.debug("Login using username %s", username)
         me, self._leagues = self.kickbase_api.login(username, password)
@@ -47,6 +52,9 @@ class KickbaseBot:
 
     def add_chat_item_callback(self, func: Callable[[ChatItem, 'KickbaseBot'], None]):
         self._chat_item_callback.append(func)
+
+    def add_market_item_callback(self, func: Callable[[Market, 'KickbaseBot'], None]):
+        self._market_callback.append(func)
         
     def _periodic_feed(self, silent=False):
         try:
@@ -111,6 +119,22 @@ class KickbaseBot:
         except Exception as ex:
             logger.error("Something went wrong fetching chat items: %s", ex)
             
+    def _periodic_market(self, silent=False):
+        try:
+            logger.debug("Fetching market")
+            market = self.kickbase_api.market(self.selected_league)
+            market.date = datetime.utcnow()
+            self.persistence.save_market(market)
+            for cb in self._market_callback:
+                if not silent:
+                    try:
+                        cb(copy.deepcopy(market), self)
+                    except Exception as ex:
+                        logger.error("Error in market callback: " + str(ex))
+            logger.debug("Fetched market")
+        except Exception as ex:
+            logger.error("Something went wrong fetching market: %s", ex)
+            
     def initialize(self, league_id):
         saved_league_id = self.persistence.get_value("league_id")
         if saved_league_id is not None and saved_league_id != league_id:
@@ -140,6 +164,10 @@ class KickbaseBot:
         logger.debug("Chat update interval was set to %s seconds", self._periodic_chat_interval)
         self._periodic_chat_thread = _start_thread_periodically(self._periodic_chat_interval, self._periodic_chat)
         threads.append(self._periodic_chat_thread)
+        
+        logger.debug("Market update interval was set to %s seconds", self._periodic_market_interval)
+        self._periodic_market_thread = _start_thread_periodically(self._periodic_market_interval, self._periodic_market)
+        threads.append(self._periodic_market_thread)
         
         logger.debug("All threads started")
         for thread in threads:

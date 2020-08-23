@@ -5,6 +5,10 @@ from kickbase_api.models.chat_item import ChatItem
 from kickbase_api.models.feed_item import FeedItem, FeedType
 from kickbase_api.models.feed_meta import FeedMeta
 from kickbase_api.models.league_data import LeagueData
+from kickbase_api.models.market import Market
+from kickbase_api.models.market_player import MarketPlayer
+from kickbase_api.models.market_player_offer import MarketPlayerOffer
+from kickbase_api.models.player import PlayerPosition, PlayerStatus
 from pymongo import MongoClient
 
 from kickbase_bot import logger
@@ -25,6 +29,7 @@ class _Persistence:
         self.league_data_collection = self.mongo_db["league_data"]
         self.feed_item_collection = self.mongo_db["feed_item"]
         self.chat_item_collection = self.mongo_db["chat_item"]
+        self.market_collection = self.mongo_db["market"]
         self.db_mutex = Lock()
 
     def save_value(self, key: str, value: any):
@@ -105,3 +110,44 @@ class _Persistence:
 
             chat_items.append(ci)
         return chat_items
+    
+    def save_market(self, market: Market):
+        if "date" not in market.__dict__:
+            raise Exception("date property is required on Market item")
+        with self.db_mutex:
+            self.market_collection.replace_one({'date': market.date}, _serialize(market), True)
+    
+    def get_markets(self) -> [Market]:
+        with self.db_mutex:
+            res = list(self.market_collection.find())
+        markets = []
+        for r in res:
+            market = Market()
+            market.__dict__ = r
+            market.date = r['date'].replace(tzinfo=timezone.utc)
+            
+            players = []
+            for p in market.players:
+                player = MarketPlayer()
+                player.__dict__ = p
+                player.position = PlayerPosition(player.position)
+                player.status = PlayerStatus(player.status)
+                players.append(player)
+                
+                offers = []
+                if hasattr(player, "offers") and player.offers is not None:
+                    for o in player.offers:
+                        offer = MarketPlayerOffer()
+                        offer.__dict__ = o
+                        offer.date = o['date'].replace(tzinfo=timezone.utc)
+                        if "valid_until_date" in o:
+                            offer.valid_until_date = o['valid_until_date'].replace(tzinfo=timezone.utc)
+                        offers.append(offer)
+                player.offers = offers
+                
+            market.players = players
+            
+            markets.append(market)
+        return markets
+                
+            
