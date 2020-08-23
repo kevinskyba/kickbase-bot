@@ -111,17 +111,17 @@ class KickbaseBot:
         except Exception as ex:
             logger.error("Something went wrong fetching chat items: %s", ex)
             
-    def run(self, league_id):
+    def initialize(self, league_id):
         saved_league_id = self.persistence.get_value("league_id")
         if saved_league_id is not None and saved_league_id != league_id:
             raise Exception("The database is based on a different league_id. Please specify a different database.")
         self.persistence.save_value("league_id", league_id)
-        
+
         for league in self._leagues:
             if league.id == league_id:
                 self.selected_league = league
                 logger.debug("Selected league: %s", self.selected_league.name)
-        
+
         if self.selected_league is None:
             logger.error("League with id %s could not be found", league_id)
             logger.error("Available leagues are:")
@@ -129,6 +129,7 @@ class KickbaseBot:
                 logger.error("%s [%s]", league.name, league.id)
             raise Exception("League not found".format(league_id))
         
+    def run(self):
         logger.debug("Starting threads...")
         threads = []
         

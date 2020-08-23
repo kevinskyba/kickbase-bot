@@ -2,7 +2,7 @@ from datetime import tzinfo, timezone
 from threading import Lock
 
 from kickbase_api.models.chat_item import ChatItem
-from kickbase_api.models.feed_item import FeedItem
+from kickbase_api.models.feed_item import FeedItem, FeedType
 from kickbase_api.models.feed_meta import FeedMeta
 from kickbase_api.models.league_data import LeagueData
 from pymongo import MongoClient
@@ -81,6 +81,7 @@ class _Persistence:
             fm = FeedMeta()
             fm.__dict__ = r["meta"]
             fi.meta = fm
+            fi.type = FeedType(fi.type)
             
             feed_items.append(fi)
         return feed_items
