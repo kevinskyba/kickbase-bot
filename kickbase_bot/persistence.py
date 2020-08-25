@@ -119,9 +119,15 @@ class _Persistence:
         with self.db_mutex:
             self.market_collection.replace_one({'date': market.date}, _serialize(market), True)
     
-    def get_markets(self) -> [Market]:
+    def get_markets(self, contain_player_id: str = None, limit: int = None) -> [Market]:
+        cond = {}
+        if contain_player_id is not None:
+            cond["players"] = { "$elemMatch": { "id": contain_player_id }}
         with self.db_mutex:
-            res = list(self.market_collection.find())
+            if limit is not None:
+                res = list(self.market_collection.find(cond).sort({"date": -1}).limit(limit))
+            else:
+                res = list(self.market_collection.find(cond).sort({"date": -1}))
         markets = []
         for r in res:
             market = Market()
