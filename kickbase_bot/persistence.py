@@ -1,6 +1,7 @@
 from datetime import tzinfo, timezone
 from threading import Lock
 
+import pymongo
 from kickbase_api.models.chat_item import ChatItem
 from kickbase_api.models.feed_item import FeedItem, FeedType
 from kickbase_api.models.feed_meta import FeedMeta
@@ -125,9 +126,9 @@ class _Persistence:
             cond["players"] = { "$elemMatch": { "id": contain_player_id }}
         with self.db_mutex:
             if limit is not None:
-                res = list(self.market_collection.find(cond).sort({"date": -1}).limit(limit))
+                res = list(self.market_collection.find(cond).sort([("date", pymongo.DESCENDING)]).limit(limit))
             else:
-                res = list(self.market_collection.find(cond).sort({"date": -1}))
+                res = list(self.market_collection.find(cond).sort([("date", pymongo.DESCENDING)]))
         markets = []
         for r in res:
             market = Market()
