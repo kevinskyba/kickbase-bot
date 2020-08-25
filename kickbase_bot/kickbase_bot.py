@@ -76,17 +76,19 @@ class KickbaseBot:
                             for cb in self._feed_item_callback:
                                 if not silent:
                                     try:
-                                        cb(copy.deepcopy(feed_item), self)
+                                        cp = copy.deepcopy(feed_item)
+                                        cb(cp, self)
+                                        del cp
                                     except Exception as ex:
                                         logger.error("[{}] Error in feed callback: ".format(feed_item.id) + str(ex))
                                         
-                    
                     if not new_feed_item:
                         break
                             
                     count = count + len(feed_items)
+                del feed_items
     
-            logger.debug("Fetched %s feed items", len(feed_items))
+            logger.debug("Fetched %s feed items", count)
         except Exception as ex:
             logger.error("Something went wrong fetching feed items: %s", ex)
 
@@ -109,9 +111,13 @@ class KickbaseBot:
                         for cb in self._chat_item_callback:
                             if not silent:
                                 try:
-                                    cb(copy.deepcopy(chat_item), self)
+                                    cp = copy.deepcopy(chat_item)
+                                    cb(cp, self)
+                                    del cp
                                 except Exception as ex:
                                     logger.error("[{}] Error in chat callback: ".format(chat_item.id) + str(ex))
+                                    
+                del chat_items
                 if next_page_token is None:
                     break
 
@@ -128,9 +134,12 @@ class KickbaseBot:
             for cb in self._market_callback:
                 if not silent:
                     try:
-                        cb(copy.deepcopy(market), self)
+                        cp = copy.deepcopy(market)
+                        cb(cp, self)
+                        del cp
                     except Exception as ex:
                         logger.error("Error in market callback: " + str(ex))
+            del market
             logger.debug("Fetched market")
         except Exception as ex:
             logger.error("Something went wrong fetching market: %s", ex)

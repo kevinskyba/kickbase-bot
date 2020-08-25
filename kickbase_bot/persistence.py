@@ -89,6 +89,7 @@ class _Persistence:
             fi.type = FeedType(fi.type)
             
             feed_items.append(fi)
+        del res
         return feed_items
 
     def does_chat_item_exist(self, chat_item: ChatItem) -> bool:
@@ -109,6 +110,7 @@ class _Persistence:
             ci.date = ci.date.replace(tzinfo=timezone.utc)
 
             chat_items.append(ci)
+        del res
         return chat_items
     
     def save_market(self, market: Market):
@@ -148,6 +150,5 @@ class _Persistence:
             market.players = players
             
             markets.append(market)
+        del res
         return markets
-                
-            
