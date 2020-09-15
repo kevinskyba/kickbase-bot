@@ -44,11 +44,12 @@ if __name__ == '__main__':
                            mongodb_host="localhost",
                            mongodb_user="kkbs_bot", mongodb_password="kkbs_bot")
     kkbs_bot.connect("example", "example_password")
-
+    kkbs_bot.initialize("example_league_id")
+    
     kkbs_bot.add_feed_item_callback(on_feed_item)
     kkbs_bot.add_chat_item_callback(on_chat_item)
 
-    kkbs_bot.run("example_league_id")
+    kkbs_bot.run()
 ```
 
 ## Docs
